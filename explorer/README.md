@@ -33,7 +33,24 @@ explorer/
 ## Deploy
 
 - GitHub Pages: publish the repo and set Pages to serve from the root or a docs-style branch/folder that includes `explorer/`.
-- Vercel: import the repo as a static site, with no build command required.
+- Vercel: import the repo as a static site from the repo root. `vercel.json` rewrites the site root to `explorer/`, so no build command is required.
+
+### Vercel setup
+
+1. Push the repo to GitHub.
+2. In Vercel, choose `Add New Project` and import the repository.
+3. Keep the project root as the repository root.
+4. Leave these fields empty:
+   - Build Command
+   - Output Directory
+   - Install Command
+5. Deploy.
+
+After deployment:
+
+- `/` serves `explorer/index.html`
+- `/data/*` resolves to `explorer/data/*`
+- static assets like `styles.css`, `app.js`, and the TopoJSON file are served through the same rewrite rule
 
 ## TopoJSON source
 
