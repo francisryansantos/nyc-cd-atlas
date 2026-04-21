@@ -2,3 +2,9 @@
 .venv/
 __pycache__/
 *.pyc
+
+fetch_acs_2024_income.py
+fetch_nypd_2024.py
+fetch_zoning_2025.py
+fetch_pluto_2025.py
+build_updated_profiles.py
