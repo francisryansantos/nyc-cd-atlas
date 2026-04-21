@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NYC Community District Profiles</title>
+    <meta
+      name="description"
+      content="An atlas of New York's 59 community districts, showing demographic, economic, land-use, and civic data for each one, updated through 2024."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css?v=20260421u" />
+  </head>
+  <body>
+    <div class="page-shell">
+
+      <header class="page-header">
+        <div class="page-header-title">
+          <h1 class="page-headline">An Atlas of New York City's 59 Community Districts.</h1>
+          <section id="page-intro" aria-label="About this explorer"></section>
+        </div>
+        <div class="mode-toggle" role="group" aria-label="Map display mode">
+          <button type="button" class="mode-button is-active" data-mode="neutral">Map</button>
+          <span class="mode-toggle-divider" aria-hidden="true">|</span>
+          <button type="button" class="mode-button" data-mode="choropleth">Compare</button>
+        </div>
+      </header>
+
+      <hr class="page-divider" aria-hidden="true" />
+
+      <section class="chip-row is-hidden" aria-label="Choropleth metrics"></section>
+
+      <main class="layout-grid">
+        <section class="map-column">
+          <div class="map-meta">
+            <h2 class="map-label-text" id="map-label">Bronx CD 1</h2>
+          </div>
+          <div
+            class="map-frame"
+            role="img"
+            aria-label="Map of New York City community districts. Select a district to view its profile."
+          >
+            <svg id="district-map" viewBox="0 0 680 560" preserveAspectRatio="xMidYMid meet"></svg>
+          </div>
+          <p class="map-zoom-hint">Scroll or pinch to zoom &middot; click to zoom in</p>
+          <div class="map-legend-area">
+            <div class="legend is-hidden" aria-live="polite"></div>
+          </div>
+        </section>
+
+        <aside class="panel-column">
+          <div id="detail-panel" class="detail-panel" aria-live="polite"></div>
+        </aside>
+      </main>
+
+      <footer class="page-footer">
+        <span class="footer-section-label">Methodology</span>
+        <p class="footer-methodology">
+          Demographic data come from the American Community Survey 2020–2024, aggregated from 2020
+          census tracts to community districts. Land-use and zoning data are from PLUTO 25v4.
+          Facility counts are from the NYC Facilities Database (October 2025) and Parks Properties
+          (March 2026). Median household income at the community-district level is computed by
+          Pareto-linear interpolation of ACS table B19001 bracket counts.
+        </p>
+        <span class="footer-section-label">Data Sources</span>
+        <p class="footer-sources">
+          ACS 2020&ndash;2024 &middot; PLUTO 25v4 &middot; NYC FacDB October 2025 &middot; NYC
+          Parks Properties March 2026 &middot; NYPD Complaint Data 2024
+        </p>
+        <p class="footer-byline">Updated April 2026 &middot; Built by <a href="https://frsantos.com" target="_blank" rel="noopener noreferrer">Ryan Santos</a></p>
+      </footer>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+    <script src="./app.js?v=20260421u" type="module"></script>
+  </body>
+</html>
