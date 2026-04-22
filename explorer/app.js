@@ -19,11 +19,11 @@ const RESIDENTIAL_CD_RANGES = [
   [501, 503],
 ];
 const BOROUGH_FILL = {
-  Manhattan: "rgba(127, 119, 221, 0.26)",
-  Bronx: "rgba(226, 118, 93, 0.26)",
-  Brooklyn: "rgba(48, 148, 138, 0.26)",
-  Queens: "rgba(223, 132, 160, 0.26)",
-  "Staten Island": "rgba(217, 163, 75, 0.26)",
+  Manhattan: "rgba(127, 119, 221, 0.52)",
+  Bronx: "rgba(226, 118, 93, 0.52)",
+  Brooklyn: "rgba(48, 148, 138, 0.52)",
+  Queens: "rgba(223, 132, 160, 0.52)",
+  "Staten Island": "rgba(217, 163, 75, 0.52)",
 };
 // Qualitative race palette — distinct hues, newsroom register
 const RACE_COLORS = {
@@ -164,6 +164,7 @@ const chipRow = document.querySelector(".chip-row");
 const detailPanel = document.getElementById("detail-panel");
 const mapLabel = document.getElementById("map-label");
 const legend = document.querySelector(".legend");
+const mapFrame = document.querySelector(".map-frame");
 const svg = d3.select("#district-map");
 
 init().catch((error) => {
@@ -174,6 +175,7 @@ init().catch((error) => {
 async function init() {
   renderMetricChips();
   bindModeButtons();
+  initTooltips();
 
   const [profileBundle, topo] = await Promise.all([
     fetch(`./data/cd_profiles.json?v=${DATA_VERSION}`).then((response) => response.json()),
@@ -228,9 +230,19 @@ function drawMap(features) {
   const path = d3.geoPath(projection);
   mapPathGenerator = path;
   const zoomLayer = svg.append("g").attr("class", "map-zoom-layer");
+  const landLayer = zoomLayer.append("g").attr("class", "land-layer");
   const mapLayer = zoomLayer.append("g").attr("class", "district-layer");
   const hitAreaLayer = zoomLayer.append("g").attr("class", "district-hit-layer");
   const labelLayer = zoomLayer.append("g").attr("class", "district-label-layer");
+
+  // Solid white base so district fills render on white, not on the blue background
+  landLayer
+    .selectAll("path")
+    .data(features)
+    .join("path")
+    .attr("d", path)
+    .attr("fill", "white")
+    .attr("stroke", "none");
 
   state.mapSelection = mapLayer
     .selectAll("path")
@@ -384,13 +396,65 @@ function selectDistrict(borocd, { zoom = true } = {}) {
 function deselectDistrict() {
   state.selectedBoroCD = null;
   updateMapHoverLabel(null);
+  if (state.mode === "choropleth") {
+    renderRankingPanel();
+  } else {
+    detailPanel.innerHTML = `
+      <div class="panel-empty-hint">
+        <p class="panel-empty-prompt">Click any district on the map to read its profile.</p>
+        <p class="panel-empty-body">Each profile covers demographics, economic conditions, land use, and civic infrastructure — drawn from the American Community Survey, PLUTO, and NYPD complaint data.</p>
+      </div>
+    `;
+  }
+  applyMapStyles();
+}
+
+function renderRankingPanel() {
+  const metric = METRICS.find((item) => item.key === state.metricKey);
+  if (!metric) return;
+
+  const ranked = state.profiles
+    .filter((profile) => Number.isFinite(profile[state.metricKey]))
+    .sort((a, b) =>
+      metric.better === "lower"
+        ? a[state.metricKey] - b[state.metricKey]
+        : b[state.metricKey] - a[state.metricKey],
+    );
+
+  const maxVal = Math.max(...ranked.map((p) => p[state.metricKey]));
+  const minVal = Math.min(...ranked.map((p) => p[state.metricKey]));
+  const range = maxVal - minVal || 1;
+
+  const rows = ranked.map((profile, index) => {
+    const val = profile[state.metricKey];
+    const barWidth = ((val - minVal) / range) * 100;
+    const color = state.colorScale(val);
+    return `
+      <div class="ranking-row" data-borocd="${profile.borocd}" tabindex="0" role="button" aria-label="${profile.name}">
+        <div class="ranking-rank">${index + 1}</div>
+        <div class="ranking-name">${profile.name}</div>
+        <div class="ranking-bar-wrap">
+          <div class="ranking-bar" style="width:${barWidth}%;background:${color};"></div>
+        </div>
+        <div class="ranking-value">${formatValue(val, metric.format)}</div>
+      </div>`;
+  }).join("");
+
   detailPanel.innerHTML = `
-    <div class="panel-empty-hint">
-      <p class="panel-empty-prompt">Click any district on the map to read its profile.</p>
-      <p class="panel-empty-body">Each profile covers demographics, economic conditions, land use, and civic infrastructure — drawn from the American Community Survey, PLUTO, and NYPD complaint data.</p>
+    <div class="ranking-panel">
+      <p class="ranking-header">${metric.label} — all 59 districts</p>
+      <div class="ranking-list">${rows}</div>
     </div>
   `;
-  applyMapStyles();
+
+  detailPanel.querySelectorAll(".ranking-row").forEach((row) => {
+    const borocd = Number(row.dataset.borocd);
+    const activate = () => { collapseIntro(); selectDistrict(borocd); };
+    row.addEventListener("click", activate);
+    row.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") { event.preventDefault(); activate(); }
+    });
+  });
 }
 
 function applyMapStyles() {
@@ -451,11 +515,15 @@ function renderMetricChips() {
       updateChoroplethScale();
       renderMetricChips();
       applyMapStyles();
+      if (!state.selectedBoroCD && state.mode === "choropleth") {
+        renderRankingPanel();
+      }
     });
   });
 }
 
 function bindModeButtons() {
+  mapFrame.classList.add("is-neutral");
   document.querySelectorAll(".mode-button").forEach((button) => {
     button.addEventListener("click", () => {
       collapseIntro();
@@ -465,8 +533,12 @@ function bindModeButtons() {
       });
       chipRow.classList.toggle("is-hidden", state.mode !== "choropleth");
       legend.classList.toggle("is-hidden", state.mode !== "choropleth");
+      mapFrame.classList.toggle("is-neutral", state.mode === "neutral");
       updateChoroplethScale();
       applyMapStyles();
+      if (!state.selectedBoroCD) {
+        state.mode === "choropleth" ? renderRankingPanel() : deselectDistrict();
+      }
     });
   });
 }
@@ -1223,4 +1295,37 @@ function formatCompactCurrency(value) {
     notation: "compact",
     maximumFractionDigits: 1,
   }).format(value);
+}
+
+function initTooltips() {
+  let active = null;
+
+  // Dismiss any open tooltip
+  function dismiss() {
+    if (active) {
+      active.classList.remove("tooltip-touch-open");
+      active = null;
+    }
+  }
+
+  // Use event delegation on the document so dynamically rendered
+  // panel content (tabs re-rendered on district click) is covered.
+  document.addEventListener("touchstart", (event) => {
+    const target = event.target.closest("[data-tooltip]");
+
+    if (target) {
+      // Tapping the same element toggles it off
+      if (active === target) {
+        dismiss();
+      } else {
+        dismiss();
+        active = target;
+        target.classList.add("tooltip-touch-open");
+      }
+      // Prevent the touch from immediately firing a click that re-dismisses
+      event.stopPropagation();
+    } else {
+      dismiss();
+    }
+  }, { passive: true });
 }

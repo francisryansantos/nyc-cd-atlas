@@ -285,6 +285,10 @@ p {
   background: none;
 }
 
+.map-frame.is-neutral {
+  background: #c8dff0;
+}
+
 #district-map {
   display: block;
   width: 100%;
@@ -353,12 +357,78 @@ p {
   display: flex;
   flex-direction: column;
   gap: 0;
-  max-height: calc(100vh - 80px);
-  overflow-y: auto;
 }
 
 .panel-empty-hint {
   margin-top: 24px;
+}
+
+/* ── Choropleth ranking list ─────────────────────────────── */
+
+.ranking-panel {
+  margin-top: 8px;
+}
+
+.ranking-header {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  margin-bottom: 10px;
+}
+
+.ranking-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.ranking-row {
+  display: grid;
+  grid-template-columns: 24px 1fr 80px 64px;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--rule-light);
+  cursor: pointer;
+}
+
+.ranking-row:hover {
+  background: var(--bg-subtle);
+}
+
+.ranking-rank {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--ink-tertiary);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ranking-name {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--ink-primary);
+  line-height: 1.3;
+}
+
+.ranking-bar-wrap {
+  height: 8px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--rule-light);
+  overflow: hidden;
+}
+
+.ranking-bar {
+  height: 100%;
+}
+
+.ranking-value {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--ink-secondary);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .panel-empty-prompt {
@@ -552,7 +622,8 @@ p {
   z-index: 10;
 }
 
-[data-tooltip]:hover::after {
+[data-tooltip]:hover::after,
+[data-tooltip].tooltip-touch-open::after {
   opacity: 1;
 }
 
@@ -1030,10 +1101,6 @@ p {
 
   .map-column {
     position: static;
-  }
-
-  .detail-panel {
-    max-height: 74vh;
   }
 
   .section-block + .section-block {
